@@ -1,15 +1,14 @@
-# Use Java 17
-FROM maven:3.9.9-eclipse-temurin-17
-
-# Set working directory
+# ---------- BUILD STAGE ----------
+FROM maven:3.9.9-eclipse-temurin-17 AS build
 WORKDIR /app
-
-# Copy project files
 COPY pom.xml .
+RUN mvn dependency:go-offline
 COPY src ./src
-
-# Build the application
 RUN mvn clean package -DskipTests
 
-# Run the application
-CMD ["java", "-jar", "target/Student-list-0.0.1-SNAPSHOT.jar"]
+# ---------- RUN STAGE ----------
+FROM eclipse-temurin:17-jre
+WORKDIR /app
+COPY --from=build /app/target/*.jar app.jar
+EXPOSE 8080
+ENTRYPOINT ["java","-jar","app.jar"]
